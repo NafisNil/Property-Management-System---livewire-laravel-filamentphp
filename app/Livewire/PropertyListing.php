@@ -4,8 +4,10 @@ namespace App\Livewire;
 
 use App\Models\Property;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 class PropertyListing extends Component
 {
     use \Livewire\WithPagination;
@@ -19,6 +21,7 @@ class PropertyListing extends Component
     public $featuredOnly = false;
     public $sortBy = 'created_at';
     public $sortDirection = 'desc';
+    public $sortPreset = 'recent';
     public $viewMode = 'grid'; // or 'list'
     protected$queryString = [
         'search' => ['except' => ''],
@@ -26,6 +29,7 @@ class PropertyListing extends Component
         'maxPrice' => ['except' => ''],
         'propertyType' => ['except' => ''],
         'listingType' => ['except' => ''],
+        'city' => ['except' => ''],
         'minBedrooms' => ['except' => ''],
         'featuredOnly' => ['except' => false],
         'sortBy' => ['except' => 'created_at'],
@@ -62,6 +66,17 @@ class PropertyListing extends Component
             $this->sortDirection = 'asc';
         }
     }
+
+    public function applySortPreset($preset)
+    {
+        $this->sortPreset = $preset;
+        match ($preset) {
+            'price_asc' => [$this->sortBy, $this->sortDirection] = ['price', 'asc'],
+            'price_desc' => [$this->sortBy, $this->sortDirection] = ['price', 'desc'],
+            default => [$this->sortBy, $this->sortDirection] = ['created_at', 'desc'],
+        };
+        $this->resetPage();
+    }
     public function updatingFeaturedOnly(){
         $this->resetPage();
     }
@@ -76,7 +91,7 @@ class PropertyListing extends Component
 
     #[Computed]
     public function properties(){
-        return Property::query()->isAvailable()
+        return Property::query()->available()
             ->when($this->search, fn($query) => $query->where(function($q){
                 $q->where('title', 'like', '%'.$this->search.'%')
                   ->orWhere('description', 'like', '%'.$this->search.'%')
@@ -96,6 +111,10 @@ class PropertyListing extends Component
     }
     public function render()
     {
-        return view('livewire.property-listing');
+        // Pass the computed paginator to the view so Blade has access to $properties
+
+        return view('livewire.property-listing', [
+            'properties' => $this->properties(),
+        ]);
     }
 }

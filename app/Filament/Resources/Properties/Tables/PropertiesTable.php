@@ -72,7 +72,7 @@ class PropertiesTable
                     ->searchable() ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_featured')
                     ->boolean(),
-                IconColumn::make('is_active')
+                IconColumn::make('is_active')->sortable()
                     ->boolean(),
                 TextColumn::make('featured_until')
                     ->dateTime()
